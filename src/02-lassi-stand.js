@@ -72,16 +72,65 @@
  *   isLassiStand({});                       // => false
  */
 export function LassiStand(name, city) {
-  // Your code here
+  this.name = name;
+  this.city = city;
+  this.menu = [];
+  this.orders = [];
+  this._nextOrderId = 1;
 }
+LassiStand.prototype.addFlavor = function (flavor, price) {
+  if (price <= 0) return -1;
+  const exists = this.menu.some((items) => items.flavor === flavor);
+  if (exists) return -1;
+  this.menu.push({ flavor, price });
+  return this.menu.length;
+};
+LassiStand.prototype.takeOrder = function (customerName, flavor, quantity) {
+  if (quantity <= 0) return -1;
 
-// Add prototype methods here:
-// LassiStand.prototype.addFlavor = function(flavor, price) { ... }
-// LassiStand.prototype.takeOrder = function(customerName, flavor, quantity) { ... }
-// LassiStand.prototype.completeOrder = function(orderId) { ... }
-// LassiStand.prototype.getRevenue = function() { ... }
-// LassiStand.prototype.getMenu = function() { ... }
+  const item = this.menu.find((m) => m.flavor === flavor);
+  if (!item) return -1;
+
+  const orderId = this._nextOrderId;
+  this._nextOrderId++;
+
+  this.orders.push({
+    id: orderId,
+    customer: customerName,
+    flavor: flavor,
+    quantity: quantity,
+    total: quantity * item.price,
+    status: "pending",
+  });
+  return orderId;
+};
+LassiStand.prototype.completeOrder = function (orderId) {
+  const order = this.orders.find((e) => e.id === orderId);
+  if (!order || order.status === "completed") return false;
+  order.status = "completed";
+  return true;
+};
+
+LassiStand.prototype.getRevenue = function () {
+  return this.orders.reduce((sum, current) => {
+    if (current.status === "completed") {
+      return sum + current.total;
+    }
+    return sum;
+  }, 0);
+};
+
+LassiStand.prototype.getMenu = function () {
+  return this.menu.slice();
+};
 
 export function isLassiStand(obj) {
-  // Your code here
+  return obj instanceof LassiStand;
 }
+const stand = new LassiStand("Sardar ji", "Amritsar");
+stand.addFlavor("mango", 40); // => 1
+stand.addFlavor("rose", 35); // => 2
+stand.addFlavor("mango", 45); // => -1 (duplicate)
+stand.takeOrder("Rahul", "mango", 2); // => 1
+stand.takeOrder("Priya", "rose", 1); // => 2
+console.log(stand.completeOrder(1));
