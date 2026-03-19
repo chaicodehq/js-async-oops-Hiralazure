@@ -76,30 +76,93 @@
  */
 export class DabbaService {
   constructor(serviceName, area) {
-    // Your code here
+    this.serviceName = serviceName;
+    this.area = area;
+    this.customers = [];
+    this._nextId = 1;
   }
 
   addCustomer(name, address, mealPreference) {
-    // Your code here
+    if (!["veg", "nonveg", "jain"].includes(mealPreference.toLowerCase())) {
+      return null;
+    }
+    const exists = this.customers.some(
+      (e) => e.name.toLowerCase() == name.toLowerCase(),
+    );
+    if (exists) return null;
+    let customerId = this._nextId;
+    this._nextId++;
+    const customerObj = {
+      id: customerId,
+      name: name,
+      address: address,
+      mealPreference: mealPreference,
+      active: true,
+      delivered: false,
+    };
+    this.customers.push(customerObj);
+    return customerObj;
   }
 
   removeCustomer(name) {
-    // Your code here
+    const customer = this.customers.find((e) => e.name == name);
+    if (!customer || customer.active == false) return false;
+    customer.active = false;
+    return true;
   }
 
   createDeliveryBatch() {
-    // Your code here
+    const customers = this.customers.filter((e) => e.active == true);
+    if (customers.length == 0) return [];
+    customers.forEach((element) => {
+      element.delivered = false;
+    });
+    const batch = customers.map((cust) => ({
+      customerId: cust.id,
+      name: cust.name,
+      address: cust.address,
+      mealPreference: cust.mealPreference,
+      batchTime: new Date().toISOString(),
+    }));
+    return batch;
   }
 
   markDelivered(customerId) {
-    // Your code here
+    const activeCustomer = this.customers.find(
+      (cust) => cust.id == customerId && cust.active == true,
+    );
+    if (!activeCustomer) return false;
+    activeCustomer.delivered = true;
+    return true;
   }
 
   getDailyReport() {
-    // Your code here
+    const customer = this.customers.filter((cust) => cust.active == true);
+    const delivered = customer.filter((cust) => cust.delivered == true);
+    const notDeliverd = customer.filter((cust) => cust.delivered == false);
+    const vegMeal = customer.filter((cust) => cust.mealPreference == "veg");
+    const nonvegMeal = customer.filter(
+      (cust) => cust.mealPreference == "nonveg",
+    );
+    const jainMeal = customer.filter((cust) => cust.mealPreference == "jain");
+    return {
+      totalCustomers: customer.length,
+      delivered: delivered.length,
+      pending: notDeliverd.length,
+      mealBreakdown: {
+        veg: vegMeal.length,
+        nonveg: nonvegMeal.length,
+        jain: jainMeal.length,
+      },
+    };
   }
 
   getCustomer(name) {
-    // Your code here
+    const customer = this.customers.find((cust) => cust.name == name);
+    return customer || null;
   }
 }
+const service = new DabbaService("Raju Dabba", "Dadar");
+service.addCustomer("Amit", "Andheri", "veg");
+console.log(service.removeCustomer("Amit"));
+console.log(service.getCustomer("Amit"));
