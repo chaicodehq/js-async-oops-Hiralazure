@@ -84,26 +84,63 @@
  *   // => [ { status: "fulfilled", value: { ...delivered order } },
  *   //      { status: "fulfilled", value: { error: "Invalid order details!", status: "failed" } } ]
  */
+let riders = ["Rahul", "Priya", "Amit", "Neha", "Vikram"];
 export function placeOrder(restaurant, items) {
-  // Your code here
+  return new Promise((resolve, reject) => {
+    if (restaurant === "" || items.length === 0)
+      return reject(new Error("Invalid order details!"));
+    setTimeout(() => {
+      resolve({
+        orderId: Math.floor(Math.random() * 10000),
+        restaurant: restaurant,
+        items: items,
+        status: "placed",
+        timestamp: new Date().toISOString(),
+      });
+    }, 50);
+  });
 }
 
 export function confirmOrder(order) {
-  // Your code here
+  return new Promise((resolve, reject) => {
+    if (!order.orderId || order.status !== "placed")
+      return reject(new Error("Order cannot be confirmed!"));
+    resolve({ ...order, status: "confirmed", estimatedTime: 30 });
+  });
 }
 
 export function assignRider(order) {
-  // Your code here
+  return new Promise((resolve, reject) => {
+    if (order.status !== "confirmed")
+      return reject(new Error("Order not confirmed yet!"));
+    let randomIndex = Math.floor(Math.random() * 5);
+    resolve({ ...order, rider: riders[randomIndex], status: "assigned" });
+  });
 }
 
 export function deliverOrder(order) {
-  // Your code here
+  return new Promise((resolve, reject) => {
+    if (!order.hasOwnProperty("rider") || order.status !== "assigned")
+      return reject(new Error("No rider assigned!"));
+    resolve({
+      ...order,
+      status: "delivered",
+      deliveredAt: new Date().toISOString(),
+    });
+  });
 }
 
 export function processDelivery(restaurant, items) {
-  // Your code here
+  return placeOrder(restaurant, items)
+    .then((order) => confirmOrder(order))
+    .then((order) => assignRider(order))
+    .then((order) => deliverOrder(order))
+    .catch((error) => ({ error: error.message, status: "failed" }));
 }
 
 export function processMultipleOrders(orderList) {
-  // Your code here
+  const promises = orderList.map((order) =>
+    processDelivery(order.restaurant, order.items),
+  );
+  return Promise.allSettled(promises);
 }
